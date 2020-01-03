@@ -26,8 +26,19 @@ class Application extends Hookable
         |
         */
         Action::add('setup_theme', function () {
-            $this->app->setLocale(get_locale());
+            $this->app->setLocale(determine_locale());
         });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Application text domain
+        |--------------------------------------------------------------------------
+        |
+        | Set the application text domain and translations based on the WordPress
+        | configuration.
+        |
+        */
+        load_application_textdomain(APP_TD, determine_locale());
 
         /*
         |--------------------------------------------------------------------------
@@ -38,21 +49,21 @@ class Application extends Hookable
         | installation.
         |
         */
-        Filter::add('network_admin_url', function ($url) {
-            return $this->formatUrl($url);
+        Filter::add('option_home', function ($url) {
+            return $this->formatHomeUrl($url);
         });
 
-        Filter::add('admin_url', function ($url) {
-            return $this->formatUrl($url);
+        Filter::add('option_siteurl', function ($url) {
+            return $this->formatSiteUrl($url);
         });
 
-        Filter::add('includes_url', function ($url) {
-            return $this->formatUrl($url, WPINC);
+        Filter::add('network_site_url', function ($url, $path, $scheme) {
+            return $this->formatNetworkUrl($url);
         });
 
         /*
         |--------------------------------------------------------------------------
-        | Framework global JS
+        | Framework global JS + CSRF
         |--------------------------------------------------------------------------
         |
         | Setup framework global JS variables. Developers can find a global
@@ -80,20 +91,11 @@ class Application extends Hookable
                     'ajaxurl' => admin_url('admin-ajax.php')
                 ])
             );
-        });
 
-        /*
-        |--------------------------------------------------------------------------
-        | WordPress Core Assets
-        |--------------------------------------------------------------------------
-        |
-        | Load WordPress core assets. We enqueue the assets in order to create
-        | the WordPress TinyMCE editor in administration screens.
-        |
-        */
-        Action::add('admin_enqueue_scripts', function () {
-            wp_enqueue_editor();
-            wp_enqueue_media();
+            // CSRF
+            if (function_exists('csrf_token')) {
+                printf('<meta name="csrf-token" content="%s">', csrf_token());
+            }
         });
 
         /*
@@ -109,6 +111,8 @@ class Application extends Hookable
         */
         try {
             Action::add('admin_enqueue_scripts', function () {
+                wp_enqueue_editor();
+                wp_enqueue_media();
                 wp_enqueue_style('wp-components');
             });
             Asset::add('themosis_core_js', 'js/themosis.core.js', ['lodash'], $this->app->version())

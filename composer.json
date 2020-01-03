@@ -33,17 +33,19 @@
   },
   "require": {
     "php": ">=7.1.0",
-    "johnpbloch/wordpress-core": "^5.0.0",
+    "johnpbloch/wordpress-core": "^5.1.0",
     "johnpbloch/wordpress-core-installer": "^1.0",
-    "themosis/framework": "2.0-beta3"
+    "themosis/framework": "^2.0.0"
   },
   "require-dev": {
     "laravel/homestead": "^7.0",
-    "phpunit/phpunit": "^7.0"
+    "phpunit/phpunit": "^7.0",
+    "symfony/var-dumper": "^4.2"
   },
   "extra":{
     "installer-paths": {
       "htdocs/content/plugins/{$name}/": ["type:wordpress-plugin"],
+      "htdocs/content/mu-plugins/{$name}/": ["type:wordpress-muplugin"],
       "htdocs/content/themes/{$name}/": ["type:wordpress-theme"]
     },
     "wordpress-install-dir": {
@@ -53,9 +55,16 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "scripts": {
+    "post-autoload-dump": [
+      "Themosis\\Core\\ComposerScripts::postAutoloadDump",
+      "@php console package:discover --ansi"
+    ],
+    "post-root-package-install": [
+      "@php -r \"file_exists('.env') || copy('.env.sample', '.env');\""
+    ],
     "post-create-project-cmd": [
-      "@php -r \"rename('.env.sample', '.env');\"",
-      "@php console vendor:publish --tag=themosis --force"
+      "@php console vendor:publish --tag=themosis --force",
+      "@php console key:generate --ansi"
     ]
   }
 }
